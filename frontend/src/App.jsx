@@ -25,6 +25,8 @@ import { addTagToContent, removeTagFromContent, setDueDateInContent, getTagsFrom
 import "./stylesheets/index.css";
 import { KeyboardNavigationDialog } from "./components/keyboard-navigation-dialog";
 
+const OVERDUE_LANE_NAME = "Overdue / Urgent";
+
 function App() {
   const [lanes, setLanes] = createSignal([]);
   const [cards, setCards] = createSignal([]);
@@ -40,6 +42,14 @@ function App() {
   const [filteredTag, setFilteredTag] = makePersisted(createSignal(null), {
     storage: localStorage,
     name: "filteredTag",
+  });
+  const [dueDateStart, setDueDateStart] = makePersisted(createSignal(""), {
+    storage: localStorage,
+    name: "dueDateStart",
+  });
+  const [dueDateEnd, setDueDateEnd] = makePersisted(createSignal(""), {
+    storage: localStorage,
+    name: "dueDateEnd",
   });
   const [tagsOptions, setTagsOptions] = createSignal([]);
   const [laneBeingRenamedName, setLaneBeingRenamedName] = createSignal(null);
@@ -212,6 +222,9 @@ function App() {
       setCards(newCards);
       setRenderUID(v7());
     });
+
+    // Check for overdue cards and move them automatically
+    await checkAndMoveOverdueCards();
   }
 
   function pickTagColorIndexBasedOnHash(value) {
@@ -326,12 +339,32 @@ function App() {
     setFilteredTag(value);
   }
 
+  function handleDueDateStartChange(value) {
+    setDueDateStart(value);
+  }
+
+  function handleDueDateEndChange(value) {
+    setDueDateEnd(value);
+  }
+
+  function clearDateRangeFilter() {
+    setDueDateStart("");
+    setDueDateEnd("");
+  }
+
   async function createNewCard(lane) {
     const newCards = structuredClone(cards());
     const newCard = { lane };
     const newCardName = v7();
-    const createdDateString = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const initialContent = `[created:${createdDateString}]\n\n`;
+    const now = new Date();
+    const createdDateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
+
+    // Calculate due date as 1 day after creation
+    const dueDateObj = new Date(now);
+    dueDateObj.setDate(dueDateObj.getDate() + 1);
+    const dueDateString = dueDateObj.toISOString().split('T')[0]; // YYYY-MM-DD
+
+    const initialContent = `[created:${createdDateString}] [due:${dueDateString}]\n\n`;
 
     await fetch(`${api}/resource${board()}/${encodeURIComponent(lane)}/${encodeURIComponent(newCardName)}.md`, {
       method: "POST",
@@ -343,6 +376,7 @@ function App() {
     newCard.lastUpdated = new Date().toISOString();
     newCard.createdAt = new Date().toISOString();
     newCard.createdDate = createdDateString;
+    newCard.dueDate = dueDateString;
     newCards.unshift(newCard);
     setCards(newCards);
     startRenamingCard(cards()[0]);
@@ -416,6 +450,92 @@ function App() {
     setLanes(newLanes);
     setNewLaneName(newName);
     setLaneBeingRenamedName(newName);
+  }
+
+  /**
+   * Creates a lane with a specific name if it doesn't exist
+   * @param {string} laneName - Name of the lane to create
+   * @returns {Promise<boolean>} - True if lane was created, false if already exists
+   */
+  async function ensureLaneExists(laneName) {
+    // Check if lane already exists
+    if (lanes().includes(laneName)) {
+      return false;
+    }
+
+    // Create the lane via API
+    await fetch(`${api}/resource${board()}/${encodeURIComponent(laneName)}`, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    // Update local state
+    const newLanes = structuredClone(lanes());
+    newLanes.push(laneName);
+    setLanes(newLanes);
+
+    return true;
+  }
+
+  /**
+   * Checks for overdue cards and moves them to the Overdue lane
+   * Called after data is fetched/refreshed
+   */
+  async function checkAndMoveOverdueCards() {
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+
+    // Find all overdue cards (have due date AND due date < today)
+    const overdueCards = cards().filter((card) => {
+      // Skip cards without due dates
+      if (!card.dueDate) {
+        return false;
+      }
+
+      // Skip cards already in Overdue lane
+      if (card.lane === OVERDUE_LANE_NAME) {
+        return false;
+      }
+
+      // Check if due date is in the past
+      return card.dueDate < today;
+    });
+
+    // If no overdue cards, nothing to do
+    if (overdueCards.length === 0) {
+      return;
+    }
+
+    // Ensure Overdue lane exists
+    await ensureLaneExists(OVERDUE_LANE_NAME);
+
+    // Move each overdue card to the Overdue lane
+    for (const card of overdueCards) {
+      try {
+        // Make API call to move card
+        await fetch(
+          `${api}/resource${board()}/${encodeURIComponent(card.lane)}/${encodeURIComponent(card.name)}.md`,
+          {
+            method: "PATCH",
+            mode: "cors",
+            headers: {  "Content-Type": "application/json" },
+            body: JSON.stringify({
+              newPath: `${board()}/${OVERDUE_LANE_NAME}/${card.name}.md`,
+            }),
+          }
+        );
+
+        // Update local state
+        card.lane = OVERDUE_LANE_NAME;
+      } catch (error) {
+        console.error(`Failed to move overdue card ${card.name}:`, error);
+      }
+    }
+
+    // Rebuild cards array to reflect new lanes
+    const newCards = structuredClone(cards());
+    setCards(newCards);
   }
 
   function renameLane() {
@@ -768,6 +888,34 @@ function App() {
             ?.map((tag) => tag.name?.toLowerCase())
             .includes(filteredTag().toLowerCase())
       )
+      .filter((card) => {
+        const hasStartDate = dueDateStart() !== "";
+        const hasEndDate = dueDateEnd() !== "";
+
+        // If no date range filter active, show all cards
+        if (!hasStartDate && !hasEndDate) {
+          return true;
+        }
+
+        // If date range filter is active, hide cards without due dates
+        if (!card.dueDate) {
+          return false;
+        }
+
+        // Apply date range filter (inclusive)
+        const cardDueDate = card.dueDate; // Format: YYYY-MM-DD
+
+        if (hasStartDate && hasEndDate) {
+          // Both dates selected: dueDate >= start AND dueDate <= end
+          return cardDueDate >= dueDateStart() && cardDueDate <= dueDateEnd();
+        } else if (hasStartDate) {
+          // Only start date: dueDate >= start
+          return cardDueDate >= dueDateStart();
+        } else {
+          // Only end date: dueDate <= end
+          return cardDueDate <= dueDateEnd();
+        }
+      })
   );
 
   function getCardsFromLane(lane) {
@@ -1239,6 +1387,11 @@ function App() {
         tagOptions={tagsOptions().map((option) => option.name)}
         filteredTag={filteredTag()}
         onTagChange={handleFilterSelectOnChange}
+        dueDateStart={dueDateStart()}
+        dueDateEnd={dueDateEnd()}
+        onDueDateStartChange={handleDueDateStartChange}
+        onDueDateEndChange={handleDueDateEndChange}
+        onClearDateRange={clearDateRangeFilter}
         onNewLaneBtnClick={createNewLane}
         viewMode={viewMode()}
         onViewModeChange={(e) => setViewMode(e.target.value)}

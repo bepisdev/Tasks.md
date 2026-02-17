@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, onMount, For } from "solid-js";
+import { createEffect, createMemo, createSignal, onMount, For, Show } from "solid-js";
 
 /**
  *
@@ -7,8 +7,13 @@ import { createEffect, createMemo, createSignal, onMount, For } from "solid-js";
  * @param {string} props.search
  * @param {string} props.filteredTag
  * @param {string[]} props.tagOptions
+ * @param {string} props.dueDateStart
+ * @param {string} props.dueDateEnd
  * @param {Function} props.onSearchChange
  * @param {Function} props.onTagChange
+ * @param {Function} props.onDueDateStartChange
+ * @param {Function} props.onDueDateEndChange
+ * @param {Function} props.onClearDateRange
  * @param {Function} props.onNewLanBtnClick
  * @param {Function} props.viewMode
  * @param {Function} props.onViewModeChange
@@ -60,6 +65,34 @@ export function Header(props) {
       </div>
       <div class="app-header__group-item">
         {filterSelect()}
+      </div>
+      <div class="app-header__group-item app-header__date-range">
+        <div class="app-header__group-item-label">Due date:</div>
+        <input
+          type="date"
+          value={props.dueDateStart}
+          onInput={(e) => props.onDueDateStartChange(e.target.value)}
+          placeholder="Start"
+          class="date-input"
+        />
+        <span class="date-range-separator">to</span>
+        <input
+          type="date"
+          value={props.dueDateEnd}
+          onInput={(e) => props.onDueDateEndChange(e.target.value)}
+          placeholder="End"
+          class="date-input"
+        />
+        <Show when={props.dueDateStart !== "" || props.dueDateEnd !== ""}>
+          <button
+            type="button"
+            onClick={props.onClearDateRange}
+            class="date-range-clear"
+            title="Clear date range filter"
+          >
+            ✕
+          </button>
+        </Show>
       </div>
       <div class="app-header__group-item">
         <div class="app-header__group-item-label">View mode:</div>
