@@ -336,6 +336,32 @@ function ExpandedCard(props) {
     props.onContentChange(newContent);
   }
 
+  function formatDateForInput(date) {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, "0");
+    const day = `${date.getDate()}`.padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function handleAddWeekToDueDate() {
+    if (!editor()) {
+      return;
+    }
+    const currentDueDate = dueDate();
+    let baseDate = new Date();
+    if (currentDueDate) {
+      const [year, month, day] = currentDueDate.split("-").map(Number);
+      if (year && month && day) {
+        baseDate = new Date(year, month - 1, day);
+      }
+    }
+    baseDate.setDate(baseDate.getDate() + 7);
+    const newDueDate = formatDateForInput(baseDate);
+    const newContent = setDueDateInContent(props.content, newDueDate);
+    editor().content = newContent;
+    props.onContentChange(newContent);
+  }
+
   function handleChangeCreatedDate(e) {
     const newContent = setCreatedDateInContent(props.content, e.target.value);
     editor().content = newContent;
@@ -459,6 +485,13 @@ function ExpandedCard(props) {
                   value={dueDate()}
                   onChange={handleChangeDueDate}
                 ></input>
+                <button
+                  type="button"
+                  class="dialog__due-date-btn"
+                  onClick={handleAddWeekToDueDate}
+                >
+                  +1 week
+                </button>
               </div>
               <div class="dialog__created-date">
                 <label for="created">Created: </label>

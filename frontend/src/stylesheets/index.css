@@ -606,6 +606,10 @@ dialog:not(.dialog--maximized) {
   white-space: nowrap;
 }
 
+.dialog__due-date-btn {
+  white-space: nowrap;
+}
+
 .dialog__created-date {
   height: 32px;
   gap: 8px;
