@@ -8,6 +8,7 @@ import { handleKeyDown } from "../utils";
  * @param {boolean} props.disableDrag
  * @param {Object[]} props.tags
  * @param {string} props.dueDate
+ * @param {string} props.createdDate
  * @param {Function} props.onClick
  * @param {JSX.Element} props.headerSlot
  * @param {boolean} props.selectionMode
@@ -41,6 +42,19 @@ export function Card(props) {
     const [year, month, day] = props.dueDate.split('-')
     const dueDateLocalTime = new Date(year, month - 1, day);
     return `Due ${dueDateLocalTime.toLocaleDateString()}`
+  })
+
+  const createdDateFormatted = createMemo(() => {
+    if (!props.createdDate) {
+      return '';
+    }
+    const [year, month, day] = props.createdDate.split('-');
+    const createdDateLocalTime = new Date(year, month - 1, day);
+    return `Created ${createdDateLocalTime.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })}`;
   })
 
   return (
@@ -102,6 +116,7 @@ export function Card(props) {
       </ul>
       <h5 class="card__content">{props.content}</h5>
       <h5 class={`card__due-date ${dueDateStatusClass()}`}>{dueDateFormatted()}</h5>
+      <h5 class="card__created-date">{createdDateFormatted()}</h5>
     </div>
   );
 }

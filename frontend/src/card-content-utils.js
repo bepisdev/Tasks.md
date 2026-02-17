@@ -98,3 +98,43 @@ export function getDueDateFromContent(content) {
   }
   return dueDateStringMatch[1];
 }
+
+/**
+ * Set or update creation date in card content
+ * @param {string} content - Current card content
+ * @param {string} newCreatedDate - New creation date (YYYY-MM-DD format)
+ * @returns {string} Updated content with creation date set/updated
+ */
+export function setCreatedDateInContent(content, newCreatedDate) {
+  const currentContent = content || "";
+
+  // Check if card already has a creation date
+  const createdDateStringMatch = currentContent.match(/\[created:(.*?)\]/);
+  const existingCreatedDate = createdDateStringMatch?.[1];
+
+  const newCreatedDateTag = `[created:${newCreatedDate}]`;
+
+  if (existingCreatedDate) {
+    // Replace existing creation date
+    return currentContent.replace(`[created:${existingCreatedDate}]`, newCreatedDateTag);
+  } else {
+    // Add new creation date at the beginning
+    return `${newCreatedDateTag}\n\n${currentContent}`;
+  }
+}
+
+/**
+ * Extract creation date from card content
+ * @param {string} content - Card content
+ * @returns {string|null} Creation date string or null if not found
+ */
+export function getCreatedDateFromContent(content) {
+  if (!content) {
+    return null;
+  }
+  const createdDateStringMatch = content.match(/\[created:(.*?)\]/);
+  if (!createdDateStringMatch?.length) {
+    return null;
+  }
+  return createdDateStringMatch[1];
+}

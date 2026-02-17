@@ -196,6 +196,10 @@ function App() {
         newCard.dueDate = dueDateStringMatch?.length
           ? dueDateStringMatch[1]
           : "";
+        const createdDateStringMatch = newCard.content.match(/\[created:(.*?)\]/);
+        newCard.createdDate = createdDateStringMatch?.length
+          ? createdDateStringMatch[1]
+          : newCard.createdAt?.split('T')[0];
         return newCard;
       })
       .toSorted((a, b) => {
@@ -288,6 +292,10 @@ function App() {
     newCard.lastUpdated = new Date().toISOString();
     const dueDateStringMatch = newCard.content.match(/\[due:(.*?)\]/);
     newCard.dueDate = dueDateStringMatch?.length ? dueDateStringMatch[1] : "";
+    const createdDateStringMatch = newCard.content.match(/\[created:(.*?)\]/);
+    newCard.createdDate = createdDateStringMatch?.length
+      ? createdDateStringMatch[1]
+      : newCard.createdAt?.split('T')[0];
     newCards[newCardIndex] = newCard;
     setCards(newCards);
     const localTagOptions = cardTagOptions.filter((tag) => !tagsOptions().some(remoteTag => remoteTag.name === tag.name))
@@ -322,15 +330,19 @@ function App() {
     const newCards = structuredClone(cards());
     const newCard = { lane };
     const newCardName = v7();
+    const createdDateString = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const initialContent = `[created:${createdDateString}]\n\n`;
+
     await fetch(`${api}/resource${board()}/${encodeURIComponent(lane)}/${encodeURIComponent(newCardName)}.md`, {
       method: "POST",
       mode: "cors",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isFile: true }),
+      body: JSON.stringify({ isFile: true, content: initialContent }),
     });
     newCard.name = newCardName;
     newCard.lastUpdated = new Date().toISOString();
     newCard.createdAt = new Date().toISOString();
+    newCard.createdDate = createdDateString;
     newCards.unshift(newCard);
     setCards(newCards);
     startRenamingCard(cards()[0]);
@@ -1300,6 +1312,7 @@ function App() {
                         name={card.name}
                         tags={card.tags}
                         dueDate={card.dueDate}
+                        createdDate={card.createdDate}
                         content={card.content}
                         disableDrag={disableCardsDrag()}
                         selectionMode={selectionMode()}

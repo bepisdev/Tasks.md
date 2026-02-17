@@ -311,9 +311,22 @@ button.small {
   align-items: center;
 }
 
+.card__created-date {
+  display: flex;
+  align-items: center;
+  color: var(--color-foreground);
+  opacity: 0.6;
+  font-size: 0.7rem;
+  font-weight: normal;
+}
+
 .card__content:not(:empty),
 .card__due-date:not(:empty) {
   margin-top: 12px;
+}
+
+.card__created-date:not(:empty) {
+  margin-top: 6px;
 }
 
 .card__content {
@@ -476,6 +489,17 @@ dialog:not(.dialog--maximized) {
 }
 
 .dialog__due-date label {
+  white-space: nowrap;
+}
+
+.dialog__created-date {
+  height: 32px;
+  gap: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.dialog__created-date label {
   white-space: nowrap;
 }
 
@@ -697,7 +721,8 @@ a > * {
 }
 
 .view-mode-tight .card__tags:not(:empty),
-.view-mode-tight .card__due-date:not(:empty) {
+.view-mode-tight .card__due-date:not(:empty),
+.view-mode-tight .card__created-date:not(:empty) {
   margin-top: 6px;
 }
 

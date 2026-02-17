@@ -15,7 +15,7 @@ import { StacksEditor } from "./Stacks-Editor/src/stacks-editor/editor";
 import { IconClear, IconScreenFull, IconScreenNormal } from "@stackoverflow/stacks-icons/icons";
 import stacksStyle from "@stackoverflow/stacks/dist/css/stacks.css?inline";
 import stacksEditorStyle from "./Stacks-Editor/src/styles/index.css?inline";
-import { addTagToContent, removeTagFromContent, setDueDateInContent, getDueDateFromContent } from "../card-content-utils";
+import { addTagToContent, removeTagFromContent, setDueDateInContent, getDueDateFromContent, getCreatedDateFromContent, setCreatedDateInContent } from "../card-content-utils";
 
 /**
  *
@@ -55,6 +55,10 @@ function ExpandedCard(props) {
 
   const dueDate = createMemo(() => {
     return getDueDateFromContent(props.content);
+  });
+
+  const createdDate = createMemo(() => {
+    return getCreatedDateFromContent(props.content);
   });
 
   let dialogRef;
@@ -332,6 +336,12 @@ function ExpandedCard(props) {
     props.onContentChange(newContent);
   }
 
+  function handleChangeCreatedDate(e) {
+    const newContent = setCreatedDateInContent(props.content, e.target.value);
+    editor().content = newContent;
+    props.onContentChange(newContent);
+  }
+
   return (
     <Portal>
       <div
@@ -449,6 +459,15 @@ function ExpandedCard(props) {
                   value={dueDate()}
                   onChange={handleChangeDueDate}
                 ></input>
+              </div>
+              <div class="dialog__created-date">
+                <label for="created">Created: </label>
+                <input
+                  name="created"
+                  type="date"
+                  value={createdDate()}
+                  onChange={handleChangeCreatedDate}
+                />
               </div>
             </div>
             <div class="dialog__content">
