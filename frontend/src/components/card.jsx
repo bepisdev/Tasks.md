@@ -64,10 +64,10 @@ export function Card(props) {
     }
     const [year, month, day] = props.createdDate.split('-');
     const createdDateLocalTime = new Date(year, month - 1, day);
-    return `Created ${createdDateLocalTime.toLocaleDateString('en-US', {
-      year: 'numeric',
+    return `Created ${createdDateLocalTime.toLocaleDateString('en-AU', {
+      day: '2-digit',
       month: 'short',
-      day: 'numeric'
+      year: 'numeric'
     })}`;
   })
 
