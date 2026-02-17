@@ -26,7 +26,7 @@ export function Card(props) {
     }
 
     return props.content
-      .replace(/\[(due|created):.*?\]/g, '')
+      .replace(/\[(tag|due|created):.*?\]/g, '')
       .replace(/[#>*_`\-]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();

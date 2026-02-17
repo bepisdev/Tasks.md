@@ -323,10 +323,34 @@ button.small {
 .card--overdue {
   border-color: #cc3333;
   box-shadow: inset 0 0 0 1px #cc3333;
+  animation: overdue-flash 0.5s ease-in-out infinite;
 }
 
 .card--overdue .card__name {
   color: #cc3333;
+  animation: overdue-text-flash 1.2s ease-in-out infinite;
+}
+
+@keyframes overdue-flash {
+  0%,
+  100% {
+    border-color: #cc3333;
+    box-shadow: inset 0 0 0 1px #cc3333;
+  }
+  50% {
+    border-color: #ff6666;
+    box-shadow: inset 0 0 0 2px #ff6666;
+  }
+}
+
+@keyframes overdue-text-flash {
+  0%,
+  100% {
+    color: #cc3333;
+  }
+  50% {
+    color: #ff6666;
+  }
 }
 
 .view-mode-extended .card,
