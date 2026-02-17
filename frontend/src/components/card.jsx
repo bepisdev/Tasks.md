@@ -55,7 +55,11 @@ export function Card(props) {
     }
     const [year, month, day] = props.dueDate.split('-')
     const dueDateLocalTime = new Date(year, month - 1, day);
-    return `Due ${dueDateLocalTime.toLocaleDateString()}`
+    return `Due ${dueDateLocalTime.toLocaleDateString('en-AU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })}`;
   })
 
   const createdDateFormatted = createMemo(() => {
