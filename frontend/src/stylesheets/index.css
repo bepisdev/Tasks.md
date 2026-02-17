@@ -1,4 +1,5 @@
 @import url('./reset.css');
+@import url('./theme-windows98.css');
 
 :root {
   /* User-customizable tag colors - KEEP THESE */
