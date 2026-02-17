@@ -306,6 +306,29 @@ button.small {
   border-color: #0066cc;
 }
 
+.card--done {
+  background: #f0f0f0;
+  border-color: #999999;
+  opacity: 0.75;
+}
+
+.card--done .card__name,
+.card--done .card__content,
+.card--done .card__due-date,
+.card--done .card__created-date {
+  color: #000000;
+  opacity: 0.65;
+}
+
+.card--overdue {
+  border-color: #cc3333;
+  box-shadow: inset 0 0 0 1px #cc3333;
+}
+
+.card--overdue .card__name {
+  color: #cc3333;
+}
+
 .view-mode-extended .card,
 .view-mode-regular .card {
   min-height: 140px;

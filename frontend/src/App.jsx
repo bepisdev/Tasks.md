@@ -21,11 +21,12 @@ import { makePersisted } from "@solid-primitives/storage";
 import { DragAndDrop } from "./components/drag-and-drop";
 import { useLocation, useNavigate } from "@solidjs/router";
 import { v7 } from "uuid";
-import { addTagToContent, removeTagFromContent, setDueDateInContent, getTagsFromContent } from "./card-content-utils";
+import { addTagToContent, removeTagFromContent, setDueDateInContent, getTagsFromContent, removeDueDateFromContent } from "./card-content-utils";
 import "./stylesheets/index.css";
 import { KeyboardNavigationDialog } from "./components/keyboard-navigation-dialog";
 
 const OVERDUE_LANE_NAME = "Overdue / Urgent";
+const DONE_LANE_NAME = "done";
 
 function App() {
   const [lanes, setLanes] = createSignal([]);
@@ -994,12 +995,14 @@ function App() {
     }
   }
 
-  function handleCardsSortChange(changedCard) {
+  async function handleCardsSortChange(changedCard) {
     const cardName = changedCard.id.slice("card-".length);
     const oldIndex = cards().findIndex((card) => card.name === cardName);
     const card = cards()[oldIndex];
     const newCardLane = changedCard.to.slice("lane-content-".length);
-    fetch(`${api}/resource${board()}/${encodeURIComponent(card.lane)}/${encodeURIComponent(cardName)}.md`, {
+    const previousLane = card.lane;
+
+    await fetch(`${api}/resource${board()}/${encodeURIComponent(card.lane)}/${encodeURIComponent(cardName)}.md`, {
       method: "PATCH",
       mode: "cors",
       headers: { "Content-Type": "application/json" },
@@ -1007,6 +1010,20 @@ function App() {
         newPath: `${board()}/${newCardLane}/${cardName}.md`,
       }),
     });
+
+    const movedToDoneLane = newCardLane.toLowerCase() === DONE_LANE_NAME;
+    if (movedToDoneLane && card.dueDate) {
+      const contentWithoutDueDate = removeDueDateFromContent(card.content || "");
+      await fetch(`${api}/resource${board()}/${encodeURIComponent(newCardLane)}/${encodeURIComponent(cardName)}.md`, {
+        method: "PATCH",
+        mode: "cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: contentWithoutDueDate }),
+      });
+      card.content = contentWithoutDueDate;
+      card.dueDate = "";
+    }
+
     card.lane = newCardLane;
     const newCards = lanes().flatMap((lane) => {
       let laneCards = cards().filter(
@@ -1025,6 +1042,10 @@ function App() {
 
     // Keep focus on the moved card so keyboard navigation works after
     // drag-and-drop and keyboard-based moves.
+    if (selectedCard()?.name === cardName && selectedCard()?.lane === previousLane) {
+      navigate(`${basePath()}${board()}/${encodeURIComponent(cardName)}.md`);
+    }
+
     setFocusedCardId(cardName);
     setTimeout(() => {
       document.getElementById(`card-${cardName}`)?.focus();
@@ -1463,6 +1484,8 @@ function App() {
                     {(card) => (
                       <Card
                         name={card.name}
+                        lane={card.lane}
+                        isInOverdueLane={card.lane === OVERDUE_LANE_NAME}
                         tags={card.tags}
                         dueDate={card.dueDate}
                         createdDate={card.createdDate}

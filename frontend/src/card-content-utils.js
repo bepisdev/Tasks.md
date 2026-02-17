@@ -71,6 +71,19 @@ export function setDueDateInContent(content, newDueDate) {
 }
 
 /**
+ * Remove due date from card content
+ * @param {string} content - Current card content
+ * @returns {string} Updated content without due date tag
+ */
+export function removeDueDateFromContent(content) {
+  const currentContent = content || "";
+  return currentContent
+    .replace(/\s*\[due:.*?\]\s*/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+/**
  * Extract tags from card content
  * @param {string} content - Card content
  * @returns {string[]} Array of tag names

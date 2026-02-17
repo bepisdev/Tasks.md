@@ -7,8 +7,10 @@ import { handleKeyDown } from "../utils";
  * @param {string} props.name
  * @param {boolean} props.disableDrag
  * @param {Object[]} props.tags
+ * @param {string} props.lane
  * @param {string} props.dueDate
  * @param {string} props.createdDate
+ * @param {boolean} props.isInOverdueLane
  * @param {Function} props.onClick
  * @param {JSX.Element} props.headerSlot
  * @param {boolean} props.selectionMode
@@ -69,11 +71,15 @@ export function Card(props) {
     })}`;
   })
 
+  const isDoneCard = createMemo(() => {
+    return (props.lane || '').toLowerCase() === 'done';
+  });
+
   return (
     <div
       role="button"
       id={`card-${props.name}`}
-      class={`card ${props.disableDrag ? "card__drag-disabled" : ""} ${props.isSelected ? "card--selected" : ""}`}
+      class={`card ${props.disableDrag ? "card__drag-disabled" : ""} ${props.isSelected ? "card--selected" : ""} ${isDoneCard() ? "card--done" : ""} ${props.isInOverdueLane ? "card--overdue" : ""}`}
       onKeyDown={(e) => {
         // Only handle Enter key, let arrow keys bubble up to board-level handler
         if (e.key === "Enter") {
