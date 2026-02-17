@@ -51,7 +51,6 @@ export function CardName(props) {
 	return (
 		<>
 			<div class="card__name">
-				{props.hasContent ? "\uD83D\uDCDD " : ""}
 				{props.name}
 			</div>
 			<div class="header-buttons">
