@@ -8,3 +8,5 @@ frontend/.env
 frontend/dev-dist
 tmpclaude-*
 test/*
+update-local.sh
+test/config/sort.json
