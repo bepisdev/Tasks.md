@@ -362,6 +362,16 @@ function ExpandedCard(props) {
     props.onContentChange(newContent);
   }
 
+  function handleSetDueDateToToday() {
+    if (!editor()) {
+      return;
+    }
+    const newDueDate = formatDateForInput(new Date());
+    const newContent = setDueDateInContent(props.content, newDueDate);
+    editor().content = newContent;
+    props.onContentChange(newContent);
+  }
+
   function handleChangeCreatedDate(e) {
     const newContent = setCreatedDateInContent(props.content, e.target.value);
     editor().content = newContent;
@@ -485,6 +495,13 @@ function ExpandedCard(props) {
                   value={dueDate()}
                   onChange={handleChangeDueDate}
                 ></input>
+                <button
+                  type="button"
+                  class="dialog__due-date-btn"
+                  onClick={handleSetDueDateToToday}
+                >
+                  Today
+                </button>
                 <button
                   type="button"
                   class="dialog__due-date-btn"
