@@ -18,6 +18,18 @@ import { handleKeyDown } from "../utils";
  */
 export function Card(props) {
 
+  const contentPreview = createMemo(() => {
+    if (!props.content) {
+      return '';
+    }
+
+    return props.content
+      .replace(/\[(due|created):.*?\]/g, '')
+      .replace(/[#>*_`\-]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  });
+
   const dueDateStatusClass = createMemo(() => {
     if (!props.dueDate) {
       return '';
@@ -114,7 +126,7 @@ export function Card(props) {
           )}
         </For>
       </ul>
-      <h5 class="card__content">{props.content}</h5>
+      <h5 class="card__content">{contentPreview()}</h5>
       <h5 class={`card__due-date ${dueDateStatusClass()}`}>{dueDateFormatted()}</h5>
       <h5 class="card__created-date">{createdDateFormatted()}</h5>
     </div>
