@@ -50,7 +50,7 @@ textarea {
   box-shadow: inset 1px 1px 0 var(--win98-light), inset -1px -1px 0 var(--win98-dark);
 }
 
-.lanes {
+.lanes-teal {
   background: var(--win98-surface);
   padding: 20px;
 }
