@@ -926,6 +926,11 @@ function App() {
             .includes(filteredTag().toLowerCase())
       )
       .filter((card) => {
+        // Overdue lane cards should always be visible, regardless of date range filter
+        if (card.lane === OVERDUE_LANE_NAME) {
+          return true;
+        }
+
         const hasStartDate = dueDateStart() !== "";
         const hasEndDate = dueDateEnd() !== "";
 
