@@ -29,6 +29,23 @@ const OVERDUE_LANE_NAME = "Overdue / Urgent";
 const DONE_LANE_NAME = "done";
 
 function App() {
+  function formatDateForInput(date) {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, "0");
+    const day = `${date.getDate()}`.padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function getDefaultDueDateRange() {
+    const start = new Date();
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    return {
+      start: formatDateForInput(start),
+      end: formatDateForInput(end),
+    };
+  }
+
   const [lanes, setLanes] = createSignal([]);
   const [cards, setCards] = createSignal([]);
   const [sort, setSort] = makePersisted(createSignal("none"), {
@@ -932,6 +949,11 @@ function App() {
     const url = window.location.href;
     if (!url.match(/\/$/)) {
       window.location.replace(`${url}/`);
+    }
+    if (!dueDateStart() && !dueDateEnd()) {
+      const defaultDueDateRange = getDefaultDueDateRange();
+      setDueDateStart(defaultDueDateRange.start);
+      setDueDateEnd(defaultDueDateRange.end);
     }
     fetchData();
   });
