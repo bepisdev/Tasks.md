@@ -25,7 +25,7 @@ import { addTagToContent, removeTagFromContent, setDueDateInContent, getTagsFrom
 import "./stylesheets/index.css";
 import { KeyboardNavigationDialog } from "./components/keyboard-navigation-dialog";
 
-const OVERDUE_LANE_NAME = "Overdue / Urgent";
+const OVERDUE_LANE_NAME = "Overdue";
 const DONE_LANE_NAME = "done";
 
 function App() {
@@ -528,11 +528,13 @@ function App() {
     // Ensure Overdue lane exists
     await ensureLaneExists(OVERDUE_LANE_NAME);
 
+    const movedCardKeys = new Set();
+
     // Move each overdue card to the Overdue lane
     for (const card of overdueCards) {
       try {
         // Make API call to move card
-        await fetch(
+        const moveResponse = await fetch(
           `${api}/resource${board()}/${encodeURIComponent(card.lane)}/${encodeURIComponent(card.name)}.md`,
           {
             method: "PATCH",
@@ -544,15 +546,32 @@ function App() {
           }
         );
 
+        if (!moveResponse.ok) {
+          throw new Error(`Move request failed with status ${moveResponse.status}`);
+        }
+
         // Update local state
-        card.lane = OVERDUE_LANE_NAME;
+        movedCardKeys.add(`${card.lane}/${card.name}`);
       } catch (error) {
         console.error(`Failed to move overdue card ${card.name}:`, error);
       }
     }
 
-    // Rebuild cards array to reflect new lanes
-    const newCards = structuredClone(cards());
+    if (movedCardKeys.size === 0) {
+      return;
+    }
+
+    // Rebuild cards array to reflect successful lane moves
+    const newCards = structuredClone(cards()).map((card) => {
+      const cardKey = `${card.lane}/${card.name}`;
+      if (movedCardKeys.has(cardKey)) {
+        return {
+          ...card,
+          lane: OVERDUE_LANE_NAME,
+        };
+      }
+      return card;
+    });
     setCards(newCards);
   }
 
