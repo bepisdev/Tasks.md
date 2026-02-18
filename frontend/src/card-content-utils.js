@@ -151,3 +151,30 @@ export function getCreatedDateFromContent(content) {
   }
   return createdDateStringMatch[1];
 }
+
+/**
+ * Set or update completed date in card content
+ * @param {string} content - Current card content
+ * @param {string} newCompletedDate - New completed date (YYYY-MM-DD format)
+ * @returns {string} Updated content with completed date set/updated
+ */
+export function setCompletedDateInContent(content, newCompletedDate) {
+  const currentContent = content || "";
+
+  // Check if card already has a completed date
+  const completedDateStringMatch = currentContent.match(/\[completed:(.*?)\]/);
+  const existingCompletedDate = completedDateStringMatch?.[1];
+
+  const newCompletedDateTag = `[completed:${newCompletedDate}]`;
+
+  if (existingCompletedDate) {
+    // Replace existing completed date
+    return currentContent.replace(
+      `[completed:${existingCompletedDate}]`,
+      newCompletedDateTag
+    );
+  } else {
+    // Add new completed date at the beginning
+    return `${newCompletedDateTag}\n\n${currentContent}`;
+  }
+}

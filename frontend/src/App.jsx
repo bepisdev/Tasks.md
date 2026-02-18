@@ -21,7 +21,7 @@ import { makePersisted } from "@solid-primitives/storage";
 import { DragAndDrop } from "./components/drag-and-drop";
 import { useLocation, useNavigate } from "@solidjs/router";
 import { v7 } from "uuid";
-import { addTagToContent, removeTagFromContent, setDueDateInContent, getTagsFromContent, removeDueDateFromContent } from "./card-content-utils";
+import { addTagToContent, removeTagFromContent, setDueDateInContent, getTagsFromContent, removeDueDateFromContent, setCompletedDateInContent } from "./card-content-utils";
 import "./stylesheets/index.css";
 import { KeyboardNavigationDialog } from "./components/keyboard-navigation-dialog";
 
@@ -228,6 +228,10 @@ function App() {
         newCard.createdDate = createdDateStringMatch?.length
           ? createdDateStringMatch[1]
           : newCard.createdAt?.split('T')[0];
+        const completedDateStringMatch = newCard.content.match(/\[completed:(.*?)\]/);
+        newCard.completedDate = completedDateStringMatch?.length
+          ? completedDateStringMatch[1]
+          : "";
         return newCard;
       })
       .toSorted((a, b) => {
@@ -327,6 +331,10 @@ function App() {
     newCard.createdDate = createdDateStringMatch?.length
       ? createdDateStringMatch[1]
       : newCard.createdAt?.split('T')[0];
+    const completedDateStringMatch = newCard.content.match(/\[completed:(.*?)\]/);
+    newCard.completedDate = completedDateStringMatch?.length
+      ? completedDateStringMatch[1]
+      : "";
     newCards[newCardIndex] = newCard;
     setCards(newCards);
     const localTagOptions = cardTagOptions.filter((tag) => !tagsOptions().some(remoteTag => remoteTag.name === tag.name))
@@ -927,7 +935,10 @@ function App() {
       )
       .filter((card) => {
         // Overdue lane cards should always be visible, regardless of date range filter
-        if (card.lane === OVERDUE_LANE_NAME) {
+        if (
+          card.lane === OVERDUE_LANE_NAME ||
+          card.lane.toLowerCase() === DONE_LANE_NAME
+        ) {
           return true;
         }
 
@@ -1058,6 +1069,8 @@ function App() {
     });
 
     const movedToDoneLane = newCardLane.toLowerCase() === DONE_LANE_NAME;
+    const movedIntoDoneLane =
+      movedToDoneLane && previousLane.toLowerCase() !== DONE_LANE_NAME;
     if (movedToDoneLane && card.dueDate) {
       const contentWithoutDueDate = removeDueDateFromContent(card.content || "");
       await fetch(`${api}/resource${board()}/${encodeURIComponent(newCardLane)}/${encodeURIComponent(cardName)}.md`, {
@@ -1068,6 +1081,22 @@ function App() {
       });
       card.content = contentWithoutDueDate;
       card.dueDate = "";
+    }
+
+    if (movedIntoDoneLane) {
+      const completedDate = new Date().toISOString().split('T')[0];
+      const contentWithCompletedDate = setCompletedDateInContent(
+        card.content || "",
+        completedDate
+      );
+      await fetch(`${api}/resource${board()}/${encodeURIComponent(newCardLane)}/${encodeURIComponent(cardName)}.md`, {
+        method: "PATCH",
+        mode: "cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: contentWithCompletedDate }),
+      });
+      card.content = contentWithCompletedDate;
+      card.completedDate = completedDate;
     }
 
     card.lane = newCardLane;
